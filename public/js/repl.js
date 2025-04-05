@@ -1,90 +1,98 @@
 function arabize(str) {
-  if (typeof str == 'number') {
-    return str.toString().
-      replace(/1/g, "١").
-      replace(/2/g, "٢").
-      replace(/3/g, "٣").
-      replace(/4/g, "٤").
-      replace(/5/g, "٥").
-      replace(/6/g, "٦").
-      replace(/7/g, "٧").
-      replace(/8/g, "٨").
-      replace(/9/g, "٩").
-      replace(/0/g, "٠").
-      replace(/\./g, "،");
+  if (typeof str == "number") {
+    return str
+      .toString()
+      .replace(/1/g, "1")
+      .replace(/2/g, "2")
+      .replace(/3/g, "3")
+      .replace(/4/g, "4")
+      .replace(/5/g, "5")
+      .replace(/6/g, "6")
+      .replace(/7/g, "7")
+      .replace(/8/g, "8")
+      .replace(/9/g, "9")
+      .replace(/0/g, "0")
+      .replace(/\./g, "،");
   } else if (str === true) {
-    return "صح";
-
+    return "ⴷ ⵜⵉⴷⴻⵜ";
   } else if (str === false) {
-    return "خطأ";
-
+    return "ⵟⵖⴻⵍⵟⴻⴹ";
   } else if (str instanceof Array) {
-    return str.map(function (e) { return arabize(e) }).toString().replace(/,/g, " ");
-
+    return str
+      .map(function (e) {
+        return arabize(e);
+      })
+      .toString()
+      .replace(/,/g, " ");
   } else {
     return str;
   }
 }
 
 // Instantiate the console widget.
-var jqconsole = $('#console').jqconsole('', '<<<');
-jqconsole.RegisterMatching('(', ')', 'parans');
-jqconsole.RegisterShortcut('C', function () {
+var jqconsole = $("#console").jqconsole("", "<<<");
+jqconsole.RegisterMatching("(", ")", "parans");
+jqconsole.RegisterShortcut("C", function () {
   this.AbortPrompt();
   startPrompt();
 });
-jqconsole.RegisterShortcut('A', function () {
+jqconsole.RegisterShortcut("A", function () {
   this.MoveToStart();
 });
-jqconsole.RegisterShortcut('E', function () {
+jqconsole.RegisterShortcut("E", function () {
   this.MoveToEnd();
 });
 
 // Starts a REPL prompt.
 function startPrompt() {
-  jqconsole.Prompt(true, function (str) {
-    // Main Enter callback.
-    str = str.trim();
-    if (str) {
-      interpreter.execute(str);
-    } else {
-      startPrompt();
-    }
-  }, function (str, callback) {
-    // Line continuation callback.
-    // Note that It's async because the qlb is in a worker.
-    interpreter.isLineEnd(str, callback);
-  }, true);
+  jqconsole.Prompt(
+    true,
+    function (str) {
+      // Main Enter callback.
+      str = str.trim();
+      if (str) {
+        interpreter.execute(str);
+      } else {
+        startPrompt();
+      }
+    },
+    function (str, callback) {
+      // Line continuation callback.
+      // Note that It's async because the qlb is in a worker.
+      interpreter.isLineEnd(str, callback);
+    },
+    true
+  );
 }
 
 // Create the worker with the worker adapter.
-var worker = new Worker('js/worker.js');
+var worker = new Worker("js/worker.js");
 
 // The main interpreter wrapper.
 var interpreter = {
   // Called with result from qlb execution by worker.onmessage.
   result: function (str) {
     if (str && (str.length !== undefined ? str.length > 0 : true)) {
-      jqconsole.Write('==> ' + arabize(str) + '\n', 'jqconsole-output');
+      jqconsole.Write("==> " + arabize(str) + "\n", "jqconsole-output");
     }
     // Restart the prompt.
     startPrompt();
   },
   // Called with prints from qlb by worker.onmessage.
   log: function (str) {
-    jqconsole.Write(arabize(str) + '\n', 'jqconsole-output', false);
+    jqconsole.Write(arabize(str) + "\n", "jqconsole-output", false);
   },
   // Called with erros from qlb execution by worker.onmessage.
   warn: function (str) {
-    jqconsole.Write('\n' + str + '\n\n', 'jqconsole-warn', false);
+    jqconsole.Write("\n" + str + "\n\n", "jqconsole-warn", false);
     // Restart the prompt.
     startPrompt();
   },
   // Sends an execute command to the worker.
   execute: function (str) {
     worker.postMessage({
-      type: 'execute',
-      data: str
+      type: "execute",
+      data: str,
     });
   },
   // Asks the worker if the command at hand is done or needs more lines.
@@ -93,10 +101,10 @@ var interpreter = {
     // attatch the callback to that.
     interpreter.isLineEndResult = callback;
     worker.postMessage({
-      type: 'isLineEnd',
-      data: str
+      type: "isLineEnd",
+      data: str,
     });
-  }
+  },
 };
 
 // Worker message router.
@@ -109,12 +117,12 @@ worker.onmessage = function (event) {
 };
 
 // Delegate events from examples etc.
-$(document).on('click', 'a.execute', function () {
-  jqconsole.SetPromptText('(' + decodeURI(this.href).match(/#(.*)/)[1] + ')');
+$(document).on("click", "a.execute", function () {
+  jqconsole.SetPromptText("(" + decodeURI(this.href).match(/#(.*)/)[1] + ")");
   jqconsole._HandleEnter();
 });
 
-$(document).on('click', 'a.load', function () {
+$(document).on("click", "a.load", function () {
   var url = this.href.match(/#(.*)/)[1];
   $.get("/lib/" + url + ".qlb", function (code) {
     jqconsole.SetPromptText(code);
@@ -123,7 +131,7 @@ $(document).on('click', 'a.load', function () {
 
 // Go!
 interpreter.execute('(ضمن "mtfaail/mtfaail")');
-interpreter.execute('(ضمن-تمديد "rasm/rasm")')
+interpreter.execute('(ضمن-تمديد "rasm/rasm")');
 startPrompt();
 
 function hl() {
@@ -131,9 +139,10 @@ function hl() {
     // .add($(".jqconsole-prompt > span").eq(0))
     // .add($(".jqconsole-prompt .jqconsole-cursor").prev())
     .each(function (i, e) {
-      Rainbow.color(this.innerText, "qlb", function (c) { $(e).html(c) })
+      Rainbow.color(this.innerText, "qlb", function (c) {
+        $(e).html(c);
+      });
     });
 }
 
 setInterval(hl, 1000);
-
